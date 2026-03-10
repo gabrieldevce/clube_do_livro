@@ -1,0 +1,283 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum MediaType {
+  MOVIE
+  BOOK
+}
+
+enum ClubEventType {
+  MEETING
+  VOTE_DEADLINE
+  SEASONAL_EVENT
+}
+
+enum ActivityType {
+  VOTE
+  REVIEW
+  COMMENT
+  SUGGESTION
+}
+
+enum DebateReactionType {
+  LIKE
+}
+
+enum WatchPartyStatus {
+  SCHEDULED
+  LIVE
+  FINISHED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  avatarUrl    String?
+  points       Int      @default(0)
+  level        String   @default("Beginner")
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+
+  reviews         Review[]
+  userBadges      UserBadge[]
+  votes           UserVote[]
+  genreVotes      GenreVote[]
+  debateComments  DebateComment[]
+  debateReactions DebateReaction[]
+  activityLogs    ActivityLog[]
+  watchPartyMessages WatchPartyMessage[]
+}
+
+model Badge {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  description     String
+  icon            String?
+  pointsThreshold Int?
+
+  userBadges UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  awardedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  badge Badge @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+}
+
+model Media {
+  id               String     @id @default(cuid())
+  title            String
+  description      String?
+  coverUrl         String?
+  year             Int?
+  authorOrDirector String?
+  genres           String[]
+  type             MediaType
+  runtimeOrPages   Int?
+  externalRating   Float?
+  externalId       String?
+  source           String?
+
+  reviews            Review[]
+  voteOptions        VoteOption[]
+  debateRooms        DebateRoom[]
+  clubMeetings       ClubMeeting[]
+  seasons            Season[]      @relation("SeasonFeaturedMedia")
+  watchParties       WatchParty[]
+  winnerVoteSessions VoteSession[] @relation("WinnerMedia")
+}
+
+model Season {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  theme       String?
+  isActive    Boolean  @default(false)
+
+  voteSessions VoteSession[]
+  clubMeetings ClubMeeting[]
+  debateRooms  DebateRoom[]
+  watchParties WatchParty[]
+
+  featuredMedia Media[] @relation("SeasonFeaturedMedia")
+}
+
+model ClubMeeting {
+  id       String        @id @default(cuid())
+  title    String
+  date     DateTime
+  type     ClubEventType
+  seasonId String?
+  mediaId  String?
+
+  season Season? @relation(fields: [seasonId], references: [id])
+  media  Media?  @relation(fields: [mediaId], references: [id])
+}
+
+model VoteSession {
+  id             String   @id @default(cuid())
+  title          String
+  startDate      DateTime
+  endDate        DateTime
+  status         String
+  seasonId       String?
+  winnerMediaId  String?
+
+  season     Season? @relation(fields: [seasonId], references: [id])
+  winnerMedia Media? @relation("WinnerMedia", fields: [winnerMediaId], references: [id])
+
+  options   VoteOption[]
+  userVotes UserVote[]
+}
+
+model VoteOption {
+  id            String   @id @default(cuid())
+  voteSessionId String
+  mediaId       String
+  voteCount     Int      @default(0)
+
+  voteSession VoteSession @relation(fields: [voteSessionId], references: [id])
+  media       Media       @relation(fields: [mediaId], references: [id])
+
+  userVotes UserVote[]
+
+  @@unique([voteSessionId, mediaId])
+}
+
+model UserVote {
+  id            String   @id @default(cuid())
+  voteSessionId String
+  userId        String
+  voteOptionId  String
+  createdAt     DateTime @default(now())
+
+  voteSession VoteSession @relation(fields: [voteSessionId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+  voteOption  VoteOption  @relation(fields: [voteOptionId], references: [id])
+
+  @@unique([voteSessionId, userId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  mediaId   String
+  rating    Int
+  comment   String?
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id])
+  media Media @relation(fields: [mediaId], references: [id])
+
+  @@index([mediaId])
+  @@index([userId])
+}
+
+model GenreVote {
+  id        String   @id @default(cuid())
+  userId    String
+  genre     String
+  weekStart DateTime
+  weight    Int      @default(1)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, genre, weekStart])
+}
+
+model DebateRoom {
+  id       String   @id @default(cuid())
+  mediaId  String
+  openedAt DateTime @default(now())
+  seasonId String?
+
+  media   Media   @relation(fields: [mediaId], references: [id])
+  season  Season? @relation(fields: [seasonId], references: [id])
+
+  comments DebateComment[]
+}
+
+model DebateComment {
+  id        String   @id @default(cuid())
+  roomId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  room DebateRoom @relation(fields: [roomId], references: [id])
+  user User       @relation(fields: [userId], references: [id])
+
+  reactions DebateReaction[]
+}
+
+model DebateReaction {
+  id        String             @id @default(cuid())
+  commentId String
+  userId    String
+  type      DebateReactionType @default(LIKE)
+  createdAt DateTime           @default(now())
+
+  comment DebateComment @relation(fields: [commentId], references: [id])
+  user    User           @relation(fields: [userId], references: [id])
+
+  @@unique([commentId, userId])
+}
+
+model ActivityLog {
+  id        String       @id @default(cuid())
+  userId    String
+  type      ActivityType
+  payload   Json?
+  createdAt DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model WatchParty {
+  id        String           @id @default(cuid())
+  mediaId   String
+  startTime DateTime
+  status    WatchPartyStatus @default(SCHEDULED)
+  seasonId  String?
+
+  media  Media   @relation(fields: [mediaId], references: [id])
+  season Season? @relation(fields: [seasonId], references: [id])
+
+  messages WatchPartyMessage[]
+}
+
+model WatchPartyMessage {
+  id      String   @id @default(cuid())
+  partyId String
+  userId  String
+  content String
+  sentAt  DateTime @default(now())
+
+  party WatchParty @relation(fields: [partyId], references: [id])
+  user  User       @relation(fields: [userId], references: [id])
+}
