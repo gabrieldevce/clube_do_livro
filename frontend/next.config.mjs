@@ -2,7 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL || 'https://clube-do-livro-luwb.onrender.com';
     return [{ source: '/api/:path*', destination: `${apiUrl}/:path*` }];
   },
 };

@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useVoteSessions, useVoteSession } from '@/lib/hooks/useData';
@@ -12,7 +13,7 @@ import { MediaCard } from '@/components/MediaCard';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-export default function VotesPage() {
+function VotesContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session');
   const { data: sessions } = useVoteSessions();
@@ -108,5 +109,13 @@ export default function VotesPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function VotesPage() {
+  return (
+    <Suspense fallback={<div className="space-y-8"><h1 className="text-2xl font-bold">Votações</h1><p className="text-stone-500">Carregando...</p></div>}>
+      <VotesContent />
+    </Suspense>
   );
 }

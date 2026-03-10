@@ -1,4 +1,12 @@
-const API_BASE = typeof window === 'undefined' ? '' : '/api';
+// Em produção (Vercel), use a URL do backend diretamente para não depender do rewrite.
+// No browser, NEXT_PUBLIC_API_URL está disponível.
+const getApiBase = () => {
+  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL)
+    return process.env.NEXT_PUBLIC_API_URL;
+  return typeof window === 'undefined' ? '' : '/api';
+};
+
+const API_BASE = getApiBase();
 
 async function request<T>(
   path: string,
