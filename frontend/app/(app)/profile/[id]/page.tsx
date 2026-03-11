@@ -53,7 +53,7 @@ export default function ProfilePage() {
       <Card>
         <h2 className="text-lg font-semibold">Sobre</h2>
         <p className="mt-1 text-stone-600 dark:text-stone-400">
-          Membro do clube PlotTwist. Participe de votações, avaliações e debates para subir no ranking.
+          Membro do Clube dos Filmes. Participe de votações, avaliações e debates para subir no ranking.
         </p>
       </Card>
     </div>

@@ -4,13 +4,44 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import type { VoteSession, Media, User, ClubMeeting, Review } from '@/lib/types';
+import type { GroupSummary, Group, PendingInvite } from '@/lib/types';
 
-export function useVoteSessions(status?: string) {
+export function useMyGroups() {
   const token = getToken();
-  const params = status ? `?status=${encodeURIComponent(status)}` : '';
   return useQuery({
-    queryKey: ['votes', status],
-    queryFn: () => api.get<VoteSession[]>(`/votes/sessions${params}`, token ?? undefined),
+    queryKey: ['groups', 'my'],
+    queryFn: () => api.get<GroupSummary[]>('/groups/my', token ?? undefined),
+    enabled: !!token,
+  });
+}
+
+export function useGroup(id: string | null) {
+  const token = getToken();
+  return useQuery({
+    queryKey: ['group', id],
+    queryFn: () => api.get<Group>(`/groups/${id}`, token ?? undefined),
+    enabled: !!id && !!token,
+  });
+}
+
+export function usePendingInvites() {
+  const token = getToken();
+  return useQuery({
+    queryKey: ['invites', 'pending'],
+    queryFn: () => api.get<PendingInvite[]>('/groups/invites/pending', token ?? undefined),
+    enabled: !!token,
+  });
+}
+
+export function useVoteSessions(status?: string, groupId?: string) {
+  const token = getToken();
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (groupId) params.set('groupId', groupId);
+  const q = params.toString() ? `?${params.toString()}` : '';
+  return useQuery({
+    queryKey: ['votes', status, groupId],
+    queryFn: () => api.get<VoteSession[]>(`/votes/sessions${q}`, token ?? undefined),
   });
 }
 

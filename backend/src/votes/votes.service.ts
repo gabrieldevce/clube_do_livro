@@ -1,12 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { GroupsService } from '../groups/groups.service';
 
 @Injectable()
 export class VotesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly groupsService: GroupsService,
+  ) {}
 
-  async getSessions(status?: string) {
-    const where = status ? { status } : {};
+  async getSessions(status?: string, groupId?: string) {
+    const where: { status?: string; groupId?: string | null } = {};
+    if (status) where.status = status;
+    if (groupId !== undefined) where.groupId = groupId || null;
     const sessions = await this.prisma.voteSession.findMany({
       where,
       orderBy: { endDate: 'desc' },
@@ -65,6 +71,69 @@ export class VotesService {
         data: { voteCount: count },
       });
     }
+    return this.getSessionById(sessionId);
+  }
+
+  async createSessionForGroup(
+    groupId: string,
+    userId: string,
+    data: { title: string; startDate: string; endDate: string },
+  ) {
+    await this.groupsService.ensureAdmin(groupId, userId);
+    const session = await this.prisma.voteSession.create({
+      data: {
+        title: data.title,
+        startDate: new Date(data.startDate),
+        endDate: new Date(data.endDate),
+        status: 'OPEN',
+        groupId,
+      },
+    });
+    return this.getSessionById(session.id);
+  }
+
+  async addOptionToSession(sessionId: string, groupId: string, userId: string, mediaId: string) {
+    await this.groupsService.ensureAdmin(groupId, userId);
+    const session = await this.prisma.voteSession.findFirst({
+      where: { id: sessionId, groupId },
+    });
+    if (!session) throw new ForbiddenException('Sessão não encontrada');
+    if (session.status !== 'OPEN') throw new ForbiddenException('Sessão já encerrada');
+    await this.prisma.voteOption.upsert({
+      where: { voteSessionId_mediaId: { voteSessionId: sessionId, mediaId } },
+      create: { voteSessionId: sessionId, mediaId },
+      update: {},
+    });
+    return this.getSessionById(sessionId);
+  }
+
+  async removeOptionFromSession(sessionId: string, groupId: string, userId: string, optionId: string) {
+    await this.groupsService.ensureAdmin(groupId, userId);
+    const session = await this.prisma.voteSession.findFirst({
+      where: { id: sessionId, groupId },
+    });
+    if (!session) throw new ForbiddenException('Sessão não encontrada');
+    await this.prisma.voteOption.deleteMany({
+      where: { id: optionId, voteSessionId: sessionId },
+    });
+    return this.getSessionById(sessionId);
+  }
+
+  async closeSession(sessionId: string, groupId: string, userId: string) {
+    await this.groupsService.ensureAdmin(groupId, userId);
+    const session = await this.prisma.voteSession.findFirst({
+      where: { id: sessionId, groupId },
+      include: { options: { orderBy: { voteCount: 'desc' } } },
+    });
+    if (!session) throw new ForbiddenException('Sessão não encontrada');
+    const winnerOption = session.options[0];
+    await this.prisma.voteSession.update({
+      where: { id: sessionId },
+      data: {
+        status: 'CLOSED',
+        winnerMediaId: winnerOption?.mediaId ?? null,
+      },
+    });
     return this.getSessionById(sessionId);
   }
 

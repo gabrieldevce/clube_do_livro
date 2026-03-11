@@ -19,7 +19,7 @@ export default function RegisterPage() {
     <div className="mx-auto max-w-sm">
       <h1 className="text-2xl font-bold">Criar conta</h1>
       <p className="mt-1 text-stone-600 dark:text-stone-400">
-        Junte-se ao clube PlotTwist
+        Junte-se ao Clube dos Filmes
       </p>
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>

@@ -14,12 +14,14 @@ import { DebateModule } from './debate/debate.module';
 import { GenresModule } from './genres/genres.module';
 import { SeasonsModule } from './seasons/seasons.module';
 import { StatsModule } from './stats/stats.module';
+import { GroupsModule } from './groups/groups.module';
 import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
     PrismaModule,
     AuthModule,
+    GroupsModule,
     VotesModule,
     RecommendationsModule,
     CalendarModule,

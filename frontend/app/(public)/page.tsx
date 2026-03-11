@@ -30,10 +30,10 @@ export default function HomePage() {
     <div className="space-y-10">
       <section>
         <h1 className="text-3xl font-bold text-stone-900 dark:text-stone-100">
-          Bem-vindo ao PlotTwist
+          Bem-vindo ao Clube dos Filmes
         </h1>
         <p className="mt-2 text-stone-600 dark:text-stone-400">
-          Vote, assista, avalie e debata com seu clube de livros e cinema.
+          Vote, assista, avalie e debata com seu grupo de filmes.
         </p>
       </section>
 
@@ -66,7 +66,7 @@ export default function HomePage() {
 
       {recommendations && recommendations.length > 0 && (
         <section>
-          <h2 className="mb-4 text-xl font-semibold">Sugestões da PlotTwist AI</h2>
+          <h2 className="mb-4 text-xl font-semibold">Sugestões do clube</h2>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {recommendations.slice(0, 10).map((m) => (
               <MediaCard key={m.id} media={m} />

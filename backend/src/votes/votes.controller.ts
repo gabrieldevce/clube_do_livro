@@ -7,8 +7,8 @@ export class VotesController {
   constructor(private readonly votesService: VotesService) {}
 
   @Get()
-  async getSessions(@Query('status') status?: string) {
-    return this.votesService.getSessions(status);
+  async getSessions(@Query('status') status?: string, @Query('groupId') groupId?: string) {
+    return this.votesService.getSessions(status, groupId);
   }
 
   @Get(':id')

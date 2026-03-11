@@ -10,7 +10,7 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-stone-200 bg-white/95 backdrop-blur dark:border-stone-800 dark:bg-stone-950/95">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="text-xl font-bold text-primary-600 dark:text-primary-400">
-          PlotTwist
+          Clube dos Filmes
         </Link>
         <nav className="flex items-center gap-6">
           <Link href="/" className="text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100">
@@ -27,6 +27,9 @@ export function Header() {
           </Link>
           <Link href="/ranking" className="text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100">
             Ranking
+          </Link>
+          <Link href="/groups" className="text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100">
+            Grupos
           </Link>
           {user?.role === 'ADMIN' && (
             <Link href="/admin" className="text-accent-600 dark:text-accent-400">

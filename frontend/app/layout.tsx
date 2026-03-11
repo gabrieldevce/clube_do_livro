@@ -3,8 +3,8 @@ import './globals.css';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 
 export const metadata: Metadata = {
-  title: 'PlotTwist - Clube do Livro e Cinema',
-  description: 'Plataforma para clubes de livros e filmes: vote, assista, avalie e debata.',
+  title: 'Clube dos Filmes',
+  description: 'Plataforma para clubes de filmes: vote, assista, avalie e debata.',
 };
 
 export default function RootLayout({

@@ -102,3 +102,33 @@ export interface StatsOverview {
   topRatedMedia: Media[];
   mostActiveUsers: User[];
 }
+
+export type GroupMemberRole = 'OWNER' | 'ADMIN' | 'MEMBER';
+
+export interface Group {
+  id: string;
+  name: string;
+  description?: string | null;
+  createdAt: string;
+  memberCount?: number;
+  voteSessionCount?: number;
+  myRole?: GroupMemberRole | null;
+  members?: { id: string; userId: string; role: GroupMemberRole; joinedAt: string; user: Pick<User, 'id' | 'name' | 'email' | 'avatarUrl'> }[];
+}
+
+export interface GroupSummary {
+  id: string;
+  name: string;
+  description?: string | null;
+  role: GroupMemberRole;
+  memberCount: number;
+  createdAt: string;
+}
+
+export interface PendingInvite {
+  id: string;
+  groupId: string;
+  groupName: string;
+  invitedByName: string;
+  expiresAt?: string;
+}

@@ -134,7 +134,7 @@ export default function MediaPage() {
                 checked={completed}
                 onChange={(e) => setCompleted(e.target.checked)}
               />
-              <span className="text-sm">Já assisti/li</span>
+              <span className="text-sm">Já assisti</span>
             </label>
             <button
               type="submit"

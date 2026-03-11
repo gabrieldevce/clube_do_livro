@@ -13,7 +13,7 @@ export default function AdminMediaPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Gerenciar mídias</h1>
       <p className="text-stone-600 dark:text-stone-400">
-        Filmes e livros do catálogo. Edição e aprovação via API.
+        Filmes e books do catálogo. Edição e aprovação via API.
       </p>
       <Card>
         <div className="flex gap-2">
@@ -36,7 +36,7 @@ export default function AdminMediaPage() {
             onClick={() => setType('BOOK')}
             className={`rounded px-3 py-1 text-sm ${type === 'BOOK' ? 'bg-primary-600 text-white' : 'bg-stone-200 dark:bg-stone-700'}`}
           >
-            Livros
+            Books
           </button>
         </div>
       </Card>

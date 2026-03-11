@@ -18,7 +18,7 @@ export default function LoginPage() {
     <div className="mx-auto max-w-sm">
       <h1 className="text-2xl font-bold">Entrar</h1>
       <p className="mt-1 text-stone-600 dark:text-stone-400">
-        Acesse sua conta do PlotTwist
+        Acesse sua conta do Clube dos Filmes
       </p>
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
