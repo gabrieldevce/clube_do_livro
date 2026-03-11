@@ -3,7 +3,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useVoteSessions, useVoteSession } from '@/lib/hooks/useData';
+import { useVoteSessions, useVoteSession, useMyGroups } from '@/lib/hooks/useData';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -12,6 +12,7 @@ import { Card } from '@/components/Card';
 import { MediaCard } from '@/components/MediaCard';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { setFlashMessage } from '@/lib/flash';
 
 function VotesContent() {
   const searchParams = useSearchParams();
@@ -19,6 +20,7 @@ function VotesContent() {
   const { data: sessions } = useVoteSessions();
   const { data: session } = useVoteSession(sessionId);
   const { isAuthenticated } = useAuth();
+  const { data: myGroups } = useMyGroups();
   const queryClient = useQueryClient();
   const token = getToken();
 
@@ -28,12 +30,29 @@ function VotesContent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vote', sessionId] });
       queryClient.invalidateQueries({ queryKey: ['votes'] });
+      setFlashMessage({ type: 'success', text: 'Voto computado com sucesso.' });
     },
   });
 
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold">Votações</h1>
+
+      {!isAuthenticated && (
+        <Card>
+          <p className="text-stone-600 dark:text-stone-400">
+            Faça login e entre em um grupo para participar das votações.
+          </p>
+        </Card>
+      )}
+
+      {isAuthenticated && myGroups && myGroups.length === 0 && (
+        <Card>
+          <p className="text-stone-600 dark:text-stone-400">
+            Você ainda não participa de nenhum grupo. Crie ou entre em um grupo para ver votações disponíveis.
+          </p>
+        </Card>
+      )}
 
       {sessionId && session ? (
         <Card>
@@ -52,6 +71,14 @@ function VotesContent() {
                   <div key={opt.id} className="rounded-lg border border-stone-200 p-3 dark:border-stone-700">
                     {opt.media && <MediaCard media={opt.media} />}
                     <p className="mt-2 text-sm text-stone-500">{opt.voteCount} votos</p>
+                    {opt.media && (
+                      <Link
+                        href={`/media/${opt.media.id}`}
+                        className="mt-1 block text-xs text-primary-600 hover:underline dark:text-primary-400"
+                      >
+                        Ver sinopse do filme
+                      </Link>
+                    )}
                     <button
                       type="button"
                       onClick={() => voteMutation.mutate(opt.id)}
@@ -78,6 +105,14 @@ function VotesContent() {
                 <div key={opt.id}>
                   {opt.media && <MediaCard media={opt.media} />}
                   <p className="mt-1 text-sm text-stone-500">{opt.voteCount} votos</p>
+                  {opt.media && (
+                    <Link
+                      href={`/media/${opt.media.id}`}
+                      className="mt-1 block text-xs text-primary-600 hover:underline dark:text-primary-400"
+                    >
+                      Ver sinopse do filme
+                    </Link>
+                  )}
                 </div>
               ))}
             </div>

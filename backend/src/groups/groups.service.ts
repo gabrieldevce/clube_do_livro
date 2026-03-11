@@ -82,6 +82,19 @@ export class GroupsService {
     await this.prisma.group.delete({ where: { id: groupId } });
   }
 
+  async leave(groupId: string, userId: string) {
+    const mem = await this.prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId, userId } },
+    });
+    if (!mem) throw new ForbiddenException('Você não é membro deste grupo');
+    if (mem.role === GroupMemberRole.OWNER) {
+      throw new ForbiddenException('Líder deve excluir o grupo ou transferir a liderança antes de sair');
+    }
+    await this.prisma.groupMember.delete({
+      where: { groupId_userId: { groupId, userId } },
+    });
+  }
+
   async ensureAdmin(groupId: string, userId: string) {
     const m = await this.prisma.groupMember.findUnique({
       where: { groupId_userId: { groupId, userId } },

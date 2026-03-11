@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { QueryProvider } from '@/components/providers/QueryProvider';
+import { FlashMessage } from '@/components/FlashMessage';
 
 export const metadata: Metadata = {
   title: 'Clube dos Filmes',
@@ -15,7 +16,10 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className="antialiased min-h-screen bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100">
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <FlashMessage />
+          {children}
+        </QueryProvider>
       </body>
     </html>
   );

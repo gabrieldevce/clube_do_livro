@@ -9,10 +9,26 @@ export class VotesService {
     private readonly groupsService: GroupsService,
   ) {}
 
-  async getSessions(status?: string, groupId?: string) {
-    const where: { status?: string; groupId?: string | null } = {};
+  async getSessions(status: string | undefined, groupId: string | undefined, userId: string) {
+    const where: { status?: string; groupId?: string | { in: string[] } | null } = {};
     if (status) where.status = status;
-    if (groupId !== undefined) where.groupId = groupId || null;
+
+    if (groupId) {
+      // Lista apenas sessões do grupo informado, se o usuário for membro
+      await this.groupsService.ensureMember(groupId, userId);
+      where.groupId = groupId;
+    } else {
+      // Sem groupId: retornar apenas sessões dos grupos do usuário
+      const memberships = await this.prisma.groupMember.findMany({
+        where: { userId },
+        select: { groupId: true },
+      });
+      const groupIds = memberships.map((m) => m.groupId);
+      if (groupIds.length === 0) {
+        return [];
+      }
+      where.groupId = { in: groupIds };
+    }
     const sessions = await this.prisma.voteSession.findMany({
       where,
       orderBy: { endDate: 'desc' },
@@ -24,7 +40,7 @@ export class VotesService {
     return sessions.map((s) => this.toSessionDto(s));
   }
 
-  async getSessionById(id: string) {
+  async getSessionById(id: string, userId: string) {
     const session = await this.prisma.voteSession.findUnique({
       where: { id },
       include: {
@@ -33,6 +49,9 @@ export class VotesService {
       },
     });
     if (!session) return null;
+    if (session.groupId) {
+      await this.groupsService.ensureMember(session.groupId, userId);
+    }
     return this.toSessionDto(session);
   }
 
@@ -45,6 +64,9 @@ export class VotesService {
       where: { id: sessionId },
     });
     if (!session || session.status !== 'OPEN') throw new Error('Votação encerrada ou inexistente');
+    if (session.groupId) {
+      await this.groupsService.ensureMember(session.groupId, userId);
+    }
     await this.prisma.$transaction([
       this.prisma.userVote.upsert({
         where: {
@@ -71,7 +93,7 @@ export class VotesService {
         data: { voteCount: count },
       });
     }
-    return this.getSessionById(sessionId);
+    return this.getSessionById(sessionId, userId);
   }
 
   async createSessionForGroup(
@@ -89,7 +111,7 @@ export class VotesService {
         groupId,
       },
     });
-    return this.getSessionById(session.id);
+    return this.getSessionById(session.id, userId);
   }
 
   async addOptionToSession(sessionId: string, groupId: string, userId: string, mediaId: string) {
@@ -104,7 +126,7 @@ export class VotesService {
       create: { voteSessionId: sessionId, mediaId },
       update: {},
     });
-    return this.getSessionById(sessionId);
+    return this.getSessionById(sessionId, userId);
   }
 
   async removeOptionFromSession(sessionId: string, groupId: string, userId: string, optionId: string) {
@@ -116,7 +138,7 @@ export class VotesService {
     await this.prisma.voteOption.deleteMany({
       where: { id: optionId, voteSessionId: sessionId },
     });
-    return this.getSessionById(sessionId);
+    return this.getSessionById(sessionId, userId);
   }
 
   async closeSession(sessionId: string, groupId: string, userId: string) {
@@ -134,7 +156,7 @@ export class VotesService {
         winnerMediaId: winnerOption?.mediaId ?? null,
       },
     });
-    return this.getSessionById(sessionId);
+    return this.getSessionById(sessionId, userId);
   }
 
   private toSessionDto(s: {

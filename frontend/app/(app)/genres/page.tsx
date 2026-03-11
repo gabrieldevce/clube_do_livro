@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { Card } from '@/components/Card';
 import { useState } from 'react';
+import { setFlashMessage } from '@/lib/flash';
 
 const COMMON_GENRES = [
   'Ficção científica', 'Terror', 'Romance', 'Drama', 'Comédia',
@@ -25,6 +26,8 @@ export default function GenresPage() {
       api.post('/genres/votes', { genres }, token ?? undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['genres'] });
+      setSelected([]);
+      setFlashMessage({ type: 'success', text: 'Votos de gêneros enviados com sucesso.' });
     },
   });
 

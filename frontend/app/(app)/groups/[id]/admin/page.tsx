@@ -10,6 +10,7 @@ import { Card } from '@/components/Card';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState } from 'react';
+import { setFlashMessage } from '@/lib/flash';
 
 export default function GroupAdminPage() {
   const params = useParams();
@@ -35,6 +36,7 @@ export default function GroupAdminPage() {
       setTitle('');
       setStartDate('');
       setEndDate('');
+      setFlashMessage({ type: 'success', text: 'Votação criada com sucesso.' });
     },
   });
 
@@ -44,6 +46,7 @@ export default function GroupAdminPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['votes'] });
       setSelectedMediaId('');
+      setFlashMessage({ type: 'success', text: 'Filme adicionado à votação.' });
     },
   });
 
@@ -52,6 +55,7 @@ export default function GroupAdminPage() {
       api.patch(`/groups/${id}/vote-sessions/${sessionId}/close`, {}, token ?? undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['votes'] });
+      setFlashMessage({ type: 'success', text: 'Votação encerrada com sucesso.' });
     },
   });
 
@@ -170,7 +174,7 @@ export default function GroupAdminPage() {
               <option value="">Selecione</option>
               {mediaList?.slice(0, 100).map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.title} {m.year ? `(${m.year})` : ''}
+                  {m.title} {m.year ? `(${m.year})` : ''}{m.authorOrDirector ? ` – ${m.authorOrDirector}` : ''}
                 </option>
               ))}
             </select>
@@ -189,6 +193,34 @@ export default function GroupAdminPage() {
           </button>
           {addOptionMutation.isError && (
             <p className="text-sm text-red-600">{(addOptionMutation.error as Error).message}</p>
+          )}
+          {selectedMediaId && mediaList && (
+            <div className="mt-4 border-t border-stone-200 pt-4 dark:border-stone-700">
+              <p className="mb-2 text-sm font-medium text-stone-600 dark:text-stone-300">
+                Pré-visualização do filme selecionado
+              </p>
+              {mediaList
+                .filter((m) => m.id === selectedMediaId)
+                .map((m) => (
+                  <div key={m.id} className="space-y-1 text-sm">
+                    <p className="font-semibold">
+                      {m.title} {m.year ? `(${m.year})` : ''}
+                    </p>
+                    {m.description && (
+                      <p className="line-clamp-3 text-stone-600 dark:text-stone-400">
+                        {m.description}
+                      </p>
+                    )}
+                    <Link
+                      href={`/media/${m.id}`}
+                      target="_blank"
+                      className="text-xs text-primary-600 hover:underline dark:text-primary-400"
+                    >
+                      Ver sinopse completa
+                    </Link>
+                  </div>
+                ))}
+            </div>
           )}
         </div>
       </Card>

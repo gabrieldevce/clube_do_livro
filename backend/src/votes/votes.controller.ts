@@ -2,21 +2,25 @@ import { Controller, Get, Post, Param, Body, Query, UseGuards, Req } from '@nest
 import { VotesService } from './votes.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('votes/sessions')
 export class VotesController {
   constructor(private readonly votesService: VotesService) {}
 
   @Get()
-  async getSessions(@Query('status') status?: string, @Query('groupId') groupId?: string) {
-    return this.votesService.getSessions(status, groupId);
+  async getSessions(
+    @Query('status') status: string | undefined,
+    @Query('groupId') groupId: string | undefined,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.votesService.getSessions(status, groupId, req.user.id);
   }
 
   @Get(':id')
-  async getSession(@Param('id') id: string) {
-    return this.votesService.getSessionById(id);
+  async getSession(@Param('id') id: string, @Req() req: { user: { id: string } }) {
+    return this.votesService.getSessionById(id, req.user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post(':id/vote')
   async vote(
     @Param('id') sessionId: string,

@@ -7,8 +7,8 @@ export function MediaCard({ media }: { media: Media }) {
   const isBook = media.type === 'BOOK';
 
   return (
-    <Link href={href}>
-      <Card className="overflow-hidden transition hover:shadow-md">
+    <Link href={href} title="Ver detalhes e sinopse">
+      <Card className="overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md">
         <div className="aspect-[2/3] w-full overflow-hidden rounded-lg bg-stone-200 dark:bg-stone-700">
           {media.coverUrl ? (
             <img

@@ -40,13 +40,27 @@ export default function AdminMediaPage() {
           </button>
         </div>
       </Card>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-        {mediaList?.map((m) => (
-          <MediaCard key={m.id} media={m} />
-        ))}
-      </div>
-      {(!mediaList || mediaList.length === 0) && (
-        <p className="text-stone-500">Nenhuma mídia encontrada.</p>
+      {!mediaList && (
+        <Card>
+          <p className="text-sm text-stone-500">Carregando catálogo de filmes...</p>
+        </Card>
+      )}
+      {mediaList && mediaList.length > 0 && (
+        <>
+          <h2 className="text-lg font-semibold">Filmes disponíveis para votações</h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+            {mediaList.map((m) => (
+              <MediaCard key={m.id} media={m} />
+            ))}
+          </div>
+        </>
+      )}
+      {mediaList && mediaList.length === 0 && (
+        <Card>
+          <p className="text-sm text-stone-500">
+            Nenhuma mídia encontrada. Cadastre filmes via backend/API para aparecerem aqui e nas votações.
+          </p>
+        </Card>
       )}
     </div>
   );

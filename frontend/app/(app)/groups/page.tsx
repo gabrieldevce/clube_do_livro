@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { Card } from '@/components/Card';
 import { useState } from 'react';
+import { setFlashMessage } from '@/lib/flash';
 
 export default function GroupsPage() {
   const { isAuthenticated } = useAuth();
@@ -25,6 +26,7 @@ export default function GroupsPage() {
       queryClient.invalidateQueries({ queryKey: ['groups'] });
       setName('');
       setDescription('');
+      setFlashMessage({ type: 'success', text: 'Grupo criado com sucesso.' });
       if (data && 'id' in data) window.location.href = `/groups/${data.id}`;
     },
   });
@@ -35,6 +37,7 @@ export default function GroupsPage() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['invites'] });
       queryClient.invalidateQueries({ queryKey: ['groups'] });
+      setFlashMessage({ type: 'success', text: 'Você entrou no grupo com sucesso.' });
       if (data?.groupId) window.location.href = `/groups/${data.groupId}`;
     },
   });
@@ -44,6 +47,7 @@ export default function GroupsPage() {
       api.post(`/groups/invites/${inviteId}/reject`, {}, token ?? undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invites'] });
+      setFlashMessage({ type: 'success', text: 'Convite recusado.' });
     },
   });
 

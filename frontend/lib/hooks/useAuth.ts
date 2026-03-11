@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { getToken, setToken, clearToken } from '@/lib/auth';
+import { setFlashMessage } from '@/lib/flash';
 import type { User } from '@/lib/types';
 
 export function useAuth() {
@@ -23,6 +24,7 @@ export function useAuth() {
     onSuccess: (data) => {
       setToken(data.access_token);
       queryClient.invalidateQueries({ queryKey: ['me'] });
+      setFlashMessage({ type: 'success', text: 'Login realizado com sucesso.' });
       router.push('/dashboard');
     },
   });
@@ -33,6 +35,7 @@ export function useAuth() {
     onSuccess: (data) => {
       setToken(data.access_token);
       queryClient.invalidateQueries({ queryKey: ['me'] });
+      setFlashMessage({ type: 'success', text: 'Conta criada com sucesso.' });
       router.push('/dashboard');
     },
   });
@@ -40,6 +43,7 @@ export function useAuth() {
   const logout = () => {
     clearToken();
     queryClient.clear();
+    setFlashMessage({ type: 'success', text: 'Você saiu da sua conta.' });
     router.push('/');
   };
 
