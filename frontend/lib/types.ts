@@ -116,6 +116,17 @@ export interface Group {
   members?: { id: string; userId: string; role: GroupMemberRole; joinedAt: string; user: Pick<User, 'id' | 'name' | 'email' | 'avatarUrl'> }[];
 }
 
+export interface GroupWithGenreVoting extends Group {
+  genreVotingOpen?: boolean;
+}
+
+export interface ExternalMovieSearchResult {
+  imdbId: string;
+  title: string;
+  year?: string;
+  poster?: string;
+}
+
 export interface GroupSummary {
   id: string;
   name: string;

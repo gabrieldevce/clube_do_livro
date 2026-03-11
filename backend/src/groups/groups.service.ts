@@ -54,6 +54,7 @@ export class GroupsService {
       createdAt: group.createdAt.toISOString(),
       memberCount: group._count.members,
       voteSessionCount: group._count.voteSessions,
+      genreVotingOpen: group.genreVotingOpen,
       myRole: membership?.role ?? null,
       members: group.members.map((m) => ({
         id: m.id,
@@ -92,6 +93,14 @@ export class GroupsService {
     }
     await this.prisma.groupMember.delete({
       where: { groupId_userId: { groupId, userId } },
+    });
+  }
+
+  async setGenreVoting(groupId: string, userId: string, open: boolean) {
+    await this.ensureAdmin(groupId, userId);
+    await this.prisma.group.update({
+      where: { id: groupId },
+      data: { genreVotingOpen: open },
     });
   }
 

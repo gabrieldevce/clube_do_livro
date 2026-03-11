@@ -15,6 +15,18 @@ export class MediaController {
     return this.mediaService.list({ type, genre, search });
   }
 
+  @Get('search/external')
+  async searchExternal(@Query('q') q?: string) {
+    if (!q || !q.trim()) return [];
+    return this.mediaService.searchExternal(q.trim());
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('from-omdb')
+  async createFromOmdb(@Body() body: { imdbId: string }) {
+    return this.mediaService.createFromOmdb(body.imdbId);
+  }
+
   @Get(':id')
   async getById(@Param('id') id: string) {
     return this.mediaService.getById(id);

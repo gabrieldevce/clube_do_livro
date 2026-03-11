@@ -69,6 +69,16 @@ export class GroupsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post(':id/genre-voting')
+  async setGenreVoting(
+    @Param('id') id: string,
+    @Body() body: { open: boolean },
+    @Req() req: { user: { id: string } },
+  ) {
+    await this.groupsService.setGenreVoting(id, req.user.id, body.open);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post(':id/invites')
   async invite(@Param('id') id: string, @Body() body: { email: string }, @Req() req: { user: { id: string } }) {
     return this.invitesService.create(id, req.user.id, body.email);

@@ -1,15 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { GroupsService } from '../groups/groups.service';
 
 @Injectable()
 export class GenresService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly groupsService: GroupsService,
+  ) {}
 
-  async getVotes() {
+  async getVotes(groupId: string, userId: string) {
+    if (!groupId) throw new ForbiddenException('Grupo é obrigatório para ver votos de gêneros');
+    await this.groupsService.ensureMember(groupId, userId);
     const weekStart = this.getWeekStart();
     const votes = await this.prisma.genreVote.groupBy({
       by: ['genre'],
-      where: { weekStart },
+      where: { weekStart, groupId },
       _count: { genre: true },
       _sum: { weight: true },
     });
@@ -18,18 +24,27 @@ export class GenresService {
       .sort((a, b) => b.totalVotes - a.totalVotes);
   }
 
-  async vote(userId: string, genres: string[]) {
+  async vote(userId: string, genres: string[], groupId: string) {
+    if (!groupId) throw new ForbiddenException('Grupo é obrigatório para votar em gêneros');
+    const group = await this.groupsService.ensureMember(groupId, userId);
+    const fullGroup = await this.prisma.group.findUnique({
+      where: { id: groupId },
+      select: { genreVotingOpen: true },
+    });
+    if (!fullGroup?.genreVotingOpen) {
+      throw new ForbiddenException('Votação de gêneros está fechada para este grupo');
+    }
     const weekStart = this.getWeekStart();
     await this.prisma.$transaction(
       genres.map((genre) =>
         this.prisma.genreVote.upsert({
-          where: { userId_genre_weekStart: { userId, genre, weekStart } },
-          create: { userId, genre, weekStart },
+          where: { userId_genre_weekStart_groupId: { userId, genre, weekStart, groupId } },
+          create: { userId, genre, weekStart, groupId },
           update: { weight: { increment: 1 } },
         }),
       ),
     );
-    return this.getVotes();
+    return this.getVotes(groupId, userId);
   }
 
   private getWeekStart() {

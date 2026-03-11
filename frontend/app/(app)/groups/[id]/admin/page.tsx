@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { useGroup, useVoteSessions, useMediaList } from '@/lib/hooks/useData';
+import { useGroup, useVoteSessions, useMediaList, useExternalMovieSearch } from '@/lib/hooks/useData';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { getToken } from '@/lib/auth';
@@ -26,6 +26,8 @@ export default function GroupAdminPage() {
   const [endDate, setEndDate] = useState('');
   const [selectedMediaId, setSelectedMediaId] = useState('');
   const [selectedSessionId, setSelectedSessionId] = useState('');
+  const [omdbQuery, setOmdbQuery] = useState('');
+  const { data: externalMovies } = useExternalMovieSearch(omdbQuery.trim());
 
   const createSessionMutation = useMutation({
     mutationFn: (body: { title: string; startDate: string; endDate: string }) =>
@@ -143,6 +145,51 @@ export default function GroupAdminPage() {
       </Card>
 
       <Card>
+        <h2 className="mb-3 text-lg font-semibold">Votação de gêneros do grupo</h2>
+        <p className="text-sm text-stone-600 dark:text-stone-400">
+          Controle se os membros podem votar nos gêneros preferidos deste grupo.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <span className="text-sm">
+            Status atual:{' '}
+            <span
+              className={
+                group.genreVotingOpen ? 'font-semibold text-emerald-600' : 'font-semibold text-stone-500'
+              }
+            >
+              {group.genreVotingOpen ? 'Aberta' : 'Fechada'}
+            </span>
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={group.genreVotingOpen}
+              onClick={async () => {
+                await api.post(`/groups/${id}/genre-voting`, { open: true }, token ?? undefined);
+                queryClient.invalidateQueries({ queryKey: ['group', id] });
+                setFlashMessage({ type: 'success', text: 'Votação de gêneros aberta para este grupo.' });
+              }}
+              className="rounded-md border border-emerald-600 px-3 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-400 dark:text-emerald-100 dark:hover:bg-emerald-900/30"
+            >
+              Abrir votação
+            </button>
+            <button
+              type="button"
+              disabled={!group.genreVotingOpen}
+              onClick={async () => {
+                await api.post(`/groups/${id}/genre-voting`, { open: false }, token ?? undefined);
+                queryClient.invalidateQueries({ queryKey: ['group', id] });
+                setFlashMessage({ type: 'success', text: 'Votação de gêneros fechada para este grupo.' });
+              }}
+              className="rounded-md border border-stone-400 px-3 py-1 text-xs font-medium text-stone-700 hover:bg-stone-50 disabled:opacity-50 dark:border-stone-500 dark:text-stone-100 dark:hover:bg-stone-800"
+            >
+              Fechar votação
+            </button>
+          </div>
+        </div>
+      </Card>
+
+      <Card>
         <h2 className="mb-3 text-lg font-semibold">Adicionar filme a uma votação aberta</h2>
         <p className="mb-3 text-sm text-stone-500">
           Selecione uma votação e um filme do catálogo para incluir como opção. Apenas votações com status OPEN aceitam novos filmes.
@@ -220,6 +267,104 @@ export default function GroupAdminPage() {
                     </Link>
                   </div>
                 ))}
+            </div>
+          )}
+        </div>
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 text-lg font-semibold">Buscar filmes na OMDb</h2>
+        <p className="mb-3 text-sm text-stone-500">
+          Pesquise filmes diretamente na OMDb e adicione-os à votação selecionada. Isso salva o filme no catálogo e já
+          o vincula à votação.
+        </p>
+        <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm text-stone-600 dark:text-stone-400">Votação aberta</label>
+              <select
+                value={selectedSessionId}
+                onChange={(e) => setSelectedSessionId(e.target.value)}
+                className="mt-1 w-full rounded border border-stone-300 px-3 py-2 dark:border-stone-600 dark:bg-stone-800"
+              >
+                <option value="">Selecione</option>
+                {openSessions.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.title} (até {format(new Date(s.endDate), 'd MMM', { locale: ptBR })})
+                  </option>
+                ))}
+                {openSessions.length === 0 && <option disabled>Nenhuma votação aberta</option>}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm text-stone-600 dark:text-stone-400">Buscar filme (OMDb)</label>
+              <input
+                type="text"
+                value={omdbQuery}
+                onChange={(e) => setOmdbQuery(e.target.value)}
+                placeholder="Digite pelo menos 3 letras do título"
+                className="mt-1 w-full rounded border border-stone-300 px-3 py-2 dark:border-stone-600 dark:bg-stone-800"
+              />
+            </div>
+          </div>
+          {!externalMovies && omdbQuery.trim().length >= 3 && (
+            <p className="text-sm text-stone-500">Buscando filmes na OMDb...</p>
+          )}
+          {externalMovies && externalMovies.length === 0 && omdbQuery.trim().length >= 3 && (
+            <p className="text-sm text-stone-500">Nenhum filme encontrado para essa busca.</p>
+          )}
+          {externalMovies && externalMovies.length > 0 && (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {externalMovies.map((m) => (
+                <div
+                  key={m.imdbId}
+                  className="flex flex-col gap-2 rounded border border-stone-200 p-3 dark:border-stone-700"
+                >
+                  <div className="flex gap-3">
+                    <div className="h-20 w-14 flex-shrink-0 overflow-hidden rounded bg-stone-200 dark:bg-stone-700">
+                      {m.poster ? (
+                        <img src={m.poster} alt={m.title} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-2xl">🎬</div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">
+                        {m.title} {m.year ? `(${m.year})` : ''}
+                      </p>
+                      <p className="mt-1 text-xs text-stone-500">
+                        Fonte: OMDb
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!selectedSessionId || addOptionMutation.isPending}
+                    onClick={async () => {
+                      if (!selectedSessionId) return;
+                      try {
+                        const created = await api.post<import('@/lib/types').Media>(
+                          '/media/from-omdb',
+                          { imdbId: m.imdbId },
+                          token ?? undefined,
+                        );
+                        await addOptionMutation.mutateAsync({
+                          sessionId: selectedSessionId,
+                          mediaId: created.id,
+                        });
+                      } catch (err) {
+                        setFlashMessage({
+                          type: 'error',
+                          text: (err as Error).message ?? 'Erro ao adicionar filme da OMDb',
+                        });
+                      }
+                    }}
+                    className="mt-1 rounded-md bg-primary-600 px-3 py-1.5 text-xs text-white hover:bg-primary-700 disabled:opacity-50"
+                  >
+                    Adicionar à votação
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>

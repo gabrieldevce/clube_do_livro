@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import type { VoteSession, Media, User, ClubMeeting, Review } from '@/lib/types';
-import type { GroupSummary, Group, PendingInvite } from '@/lib/types';
+import type { GroupSummary, GroupWithGenreVoting, PendingInvite, ExternalMovieSearchResult } from '@/lib/types';
 
 export function useMyGroups() {
   const token = getToken();
@@ -19,7 +19,7 @@ export function useGroup(id: string | null) {
   const token = getToken();
   return useQuery({
     queryKey: ['group', id],
-    queryFn: () => api.get<Group>(`/groups/${id}`, token ?? undefined),
+    queryFn: () => api.get<GroupWithGenreVoting>(`/groups/${id}`, token ?? undefined),
     enabled: !!id && !!token,
   });
 }
@@ -132,6 +132,25 @@ export function useGenreVotes() {
   return useQuery({
     queryKey: ['genres', 'votes'],
     queryFn: () => api.get<{ genre: string; totalVotes: number }[]>('/genres/votes', token ?? undefined),
+  });
+}
+
+export function useGenreVotesByGroup(groupId: string | null) {
+  const token = getToken();
+  return useQuery({
+    queryKey: ['genres', 'votes', groupId],
+    queryFn: () => api.get<{ genre: string; totalVotes: number }[]>(`/genres/votes?groupId=${groupId}`, token ?? undefined),
+    enabled: !!groupId && !!token,
+  });
+}
+
+export function useExternalMovieSearch(query: string) {
+  const token = getToken();
+  return useQuery({
+    queryKey: ['external-movies', query],
+    queryFn: () =>
+      api.get<ExternalMovieSearchResult[]>(`/media/search/external?q=${encodeURIComponent(query)}`, token ?? undefined),
+    enabled: !!query && query.length >= 3,
   });
 }
 
